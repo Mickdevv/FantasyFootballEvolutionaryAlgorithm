@@ -39,6 +39,7 @@ mid = np.zeros(num_players)
 defe = np.zeros(num_players)
 stri = np.zeros(num_players)
 
+#Creating an array per type of player
 for i in range(num_players):
     if data['Position'][i] == 'GK':
         gk[i] = 1
@@ -56,20 +57,33 @@ popCount = 0
 # this returns a single individual: this function has the probability pInit of initialsing as feasible:
 # if it is set to 0, initialisation is all random. If it is 1, initialistion is all feasible
 def myInitialisationFunction(icls, size):
-   
+    
     # first create an individual with all bits set to 0
     ind = icls(np.zeros(num_players))
+    
+    #Set the counters for each type of player to 0
     gkCount = 0
     defeCount = 0
     midCount = 0
     striCount = 0
+    
+    #total player count
+    playerCount = 0
+    
+    #probability that the bit will be set to 1
     initProb = 8
+    
+    #Initial pass over the individual for it to meet the minimum requirements for each type of player
+    #Loops until the requirements are met
     while gkCount == 0 or defeCount < 3 or midCount < 3 or striCount < 1:
         for i in range(num_players):
-
-            if sum(ind) < 8:
+            playerCount = gkCount + defeCount + midCount + striCount
+            if playerCount < 8:
+                #this is used to determine wether the player will be considered for the team. The probability of 
+                #consideration is 8/523 to get an even spread across the individual
                 j = random.randint(0, 523)
                 if j < initProb:
+                    #checks wether more can be added. If so, then add them to the team
                     if (data['Position'][i] == 'GK' and gkCount == 0):
                         gkCount+=1
                         ind[i] = 1
@@ -83,13 +97,16 @@ def myInitialisationFunction(icls, size):
                         striCount+=1
                         ind[i] = 1
             
-    print(sum(ind), gkCount + defeCount + midCount + striCount, gkCount, defeCount, midCount, striCount)
-    while sum(ind)<11:
+    #print(sum(ind), gkCount + defeCount + midCount + striCount, gkCount, defeCount, midCount, striCount)
+    
+    #The same loop as the previous one, only here it is to randomly fill the rest of the team to meet the requirements
+    while playerCount<11:
         for i in range(num_players):
-
-            if sum(ind) < 11:
+            
+            if playerCount < 11:
                 j = random.randint(0, 523)
                 if j < initProb:
+                    
                     if (data['Position'][i] == 'GK' and gkCount == 0):
                         gkCount+=1
                         ind[i] = 1
@@ -102,32 +119,13 @@ def myInitialisationFunction(icls, size):
                     elif (data['Position'][i] == 'STR' and striCount < 3):
                         striCount+=1
                         ind[i] = 1
+            playerCount = gkCount + defeCount + midCount + striCount
             
             
                 
-    print(sum(ind), gkCount + defeCount + midCount + striCount, gkCount, defeCount, midCount, striCount)
+    print(playerCount, gkCount, defeCount, midCount, striCount)
     print("--------------")
-        
-    # if u < pInit:
-    #     current_weight=0
-    
-    #     # create a random permutation of the numbers 0 to NBR_ITEMS-1
-    #     # now loop over this shuffled list from start to finish: add the item if it does not break the weight constraint
-    
-    #     item_indices = list(range(0, size))
-    #     random.shuffle(item_indices)
-    
-    #     for pos in range(size):
-    #         item = item_indices[pos]
-    #         new_weight = weights[item]
-    #         if current_weight + new_weight <= MAX_WEIGHT:
-    #             ind[item]=1
-    #             current_weight += new_weight
-    # else:
-    #     for i in range(size):
-    #          ind[i] = random.randint(0, 1)
-   
-    #print("ind weight is %s" %(current_weight))
+     
     return ind
 
 # define the fitness class and creare an individual class
@@ -144,6 +142,7 @@ toolbox.register("individual", myInitialisationFunction, creator.Individual, num
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 def evalFootie1(individual):
+    
     
     iCost = 0.0
     value = 0.0
@@ -168,6 +167,7 @@ def evalFootie1(individual):
             elif data['Position'][item] == 'STR':
                 striCountE+=1
                 
+    #Below are the constraints. If the team breahes any of the constraints then their evaluation score is set to 0
     if  (iCost > budget or playerCountE != 11 or gkCountE > 1 or defeCountE > 5 or midCountE > 5 or striCountE > 3):
         return 0,          
     return  value,
@@ -237,7 +237,7 @@ toolbox.register("select", tools.selTournament, tournsize=2)
 def main():
     
     # choose a population size: e.g. 200
-    population = 15000
+    population = 25000
     pop = toolbox.population(n=population)
     
     # keep track of the single best solution found
@@ -253,7 +253,7 @@ def main():
     
     # run the algorithm: we need to tell it what parameters to use
     # cxpb = crossover probability; mutpb = mutation probability; ngen = number of iterations
-    pop, log = algorithms.eaSimple(pop, toolbox, cxpb=0.6, mutpb=0.05, ngen=80, 
+    pop, log = algorithms.eaSimple(pop, toolbox, cxpb=0.6, mutpb=0.05, ngen=40, 
                                    stats=stats, halloffame=hof, verbose=True)
     print (population)
     return pop, log, hof
@@ -275,7 +275,7 @@ best = hof[0].fitness.values[0]   # best fitness found is stored at index 0 in t
 
 max = log.select("max")  # max fitness per generation stored in log
 
-for i in range(150):  # set to ngen
+for i in range(40):  # set to ngen
         fit = max[i]
         if fit == best:
             break        

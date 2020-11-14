@@ -7,7 +7,7 @@ import random
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-
+import scipy
 
 # import deap packages required
 from deap import algorithms
@@ -24,6 +24,7 @@ data = (pd.read_csv("clean-data.csv")
 
 num_players = len(data.index)
 
+NGEN = 100
 print("num possible players is %s" % (num_players))
 
 # HELPFUL DATA 
@@ -53,6 +54,7 @@ for i in range(num_players):
 # check the constraints
 # the function MUST be passed a list of length num_players in which each bit is set to 0 or 1
 popCount = 0
+
 
 # this returns a single individual: this function has the probability pInit of initialsing as feasible:
 # if it is set to 0, initialisation is all random. If it is 1, initialistion is all feasible
@@ -123,8 +125,8 @@ def myInitialisationFunction(icls, size):
             
             
                 
-    print(playerCount, gkCount, defeCount, midCount, striCount)
-    print("--------------")
+    #print(playerCount, gkCount, defeCount, midCount, striCount)
+    #7print("--------------")
      
     return ind
 
@@ -142,7 +144,6 @@ toolbox.register("individual", myInitialisationFunction, creator.Individual, num
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 def evalFootie1(individual):
-    
     
     iCost = 0.0
     value = 0.0
@@ -230,14 +231,15 @@ def check_constraints(individual):
 toolbox.register("constraints", check_constraints)
 toolbox.register("evaluate", evalFootie1)
 toolbox.register("mate", tools.cxTwoPoint)
-toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
+toolbox.register("mutate", tools.mutFlipBit, indpb=0.01)
 toolbox.register("select", tools.selTournament, tournsize=2)
 
 
 def main():
     
     # choose a population size: e.g. 200
-    population = 25000
+    
+    population = POPSIZE
     pop = toolbox.population(n=population)
     
     # keep track of the single best solution found
@@ -253,7 +255,7 @@ def main():
     
     # run the algorithm: we need to tell it what parameters to use
     # cxpb = crossover probability; mutpb = mutation probability; ngen = number of iterations
-    pop, log = algorithms.eaSimple(pop, toolbox, cxpb=0.6, mutpb=0.05, ngen=40, 
+    pop, log = algorithms.eaSimple(pop, toolbox, cxpb=0.6, mutpb=0.01, ngen=NGEN, 
                                    stats=stats, halloffame=hof, verbose=True)
     print (population)
     return pop, log, hof
@@ -261,7 +263,38 @@ def main():
 
 ##############################
 # run the main function 
-pop, log, hof = main()
+
+# create an dataframe that has 3 columns to record the important data from each run
+column_names = ['popsize', 'fitness', 'genMaxFound']
+df = pd.DataFrame(columns = column_names)
+
+
+for  POPSIZE in range(500, 1510, 500):
+        # repeat EA 10x for each parameter
+        for reps in range(10):
+            pop,log,hof = main()
+            print("----------------- %i, %i -----------------", POPSIZE, reps)
+            # extract the best fitness
+            best = hof[0].fitness.values[0]
+            # save the generation this fitness was first found
+            max = log.select('max')
+            for gen in range(NGEN):  
+                if max[gen] == best:
+                    break   
+            
+            df = df.append({'popsize': POPSIZE , 'fitness': best, 'genMaxFound':gen}, ignore_index=True)
+
+# code for printing statistics and plots
+print(df.groupby('popsize').mean())
+print(df.groupby('popsize').median())
+print(df.groupby('popsize').std())
+
+# plot the boxplot of fitness per population size
+boxplot = df.boxplot(column=['fitness'], by=['popsize'])
+
+# plot genMaxFound per population size
+boxplot = df.boxplot(column=['genMaxFound'], by=['popsize'])
+
 
 ##############################
 print("-------")
@@ -275,7 +308,7 @@ best = hof[0].fitness.values[0]   # best fitness found is stored at index 0 in t
 
 max = log.select("max")  # max fitness per generation stored in log
 
-for i in range(40):  # set to ngen
+for i in range(NGEN):  # set to ngen
         fit = max[i]
         if fit == best:
             break        

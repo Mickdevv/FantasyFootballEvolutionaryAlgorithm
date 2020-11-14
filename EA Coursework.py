@@ -272,8 +272,9 @@ df = pd.DataFrame(columns = column_names)
 for  POPSIZE in range(500, 1510, 500):
         # repeat EA 10x for each parameter
         for reps in range(10):
+            print("Population: ", POPSIZE, ", Reps: ", reps)
             pop,log,hof = main()
-            print("----------------- %i, %i -----------------", POPSIZE, reps)
+            
             # extract the best fitness
             best = hof[0].fitness.values[0]
             # save the generation this fitness was first found

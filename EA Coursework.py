@@ -269,7 +269,7 @@ column_names = ['popsize', 'fitness', 'genMaxFound']
 df = pd.DataFrame(columns = column_names)
 
 
-for  POPSIZE in range(500, 1510, 500):
+for  POPSIZE in range(500, 1010, 500):
         # repeat EA 10x for each parameter
         for reps in range(10):
             print("Population: ", POPSIZE, ", Reps: ", reps)

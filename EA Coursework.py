@@ -33,7 +33,6 @@ points = data['Points']
 cost = data['Cost']
 budget = 100
     
-
 # create lists with all elements initialised to 0
 gk = np.zeros(num_players)
 mid = np.zeros(num_players)
@@ -50,10 +49,44 @@ for i in range(num_players):
         mid[i] = 1
     elif data['Position'][i] == 'STR':
         stri[i]=1
+        
+goalKeeperCount = sum(gk)
+defenderCount = sum(defe)
+midfielderCount = sum(mid)
+strikerCount = sum(stri)
+popCheck = goalKeeperCount + defenderCount + midfielderCount + strikerCount
+print("GoalKeepers: ", goalKeeperCount, " Defenders: ", defenderCount, " Midfielders: ", midfielderCount, " Strikers: ", strikerCount, " ~ ", popCheck)  
+      
+gkIndices = np.zeros(int(goalKeeperCount))
+defeIndices = np.zeros(int(defenderCount))
+midIndices = np.zeros(int(midfielderCount))
+striIndices = np.zeros(int(strikerCount))
+
+gkTempCount = 0
+defeTempCount = 0
+midTempCount = 0
+striTempCount = 0
+
+for i in range(num_players):
+    if data['Position'][i] == 'GK':
+        gkIndices[gkTempCount] = i
+        gkTempCount += 1
+    elif data['Position'][i] == 'DEF':
+        defeIndices[defeTempCount] = i
+        defeTempCount += 1
+    elif data['Position'][i] == 'MID':
+        midIndices[midTempCount] = i
+        midTempCount += 1
+    elif data['Position'][i] == 'STR':
+        striIndices[striTempCount]=i
+        striTempCount +=1
+
+
   
 # check the constraints
 # the function MUST be passed a list of length num_players in which each bit is set to 0 or 1
 popCount = 0
+
 
 
 # this returns a single individual: this function has the probability pInit of initialsing as feasible:
@@ -227,11 +260,109 @@ def check_constraints(individual):
     
     return broken_constraints, totalpoints
 
+def customMutate(individual):
+    playerNum = 0
+    flipOne = random.randint(1,11)
+    #print(flipOne, "--")
+    #check_constraints(individual)
+    for i in range(523):
+        if individual[i] == 1:
+            playerNum +=1
+            
+        if playerNum == flipOne:
+            individual[i] = 0 
+    #check_constraints(individual)
+            
+    iCost = 0.0
+    value = 0.0
+    playerCountM = 0
+    gkCountM = 0
+    defeCountM= 0
+    midCountM= 0
+    striCountM = 0
+    
+    for item in range(num_players):
+        if (individual[item]==1):
+            playerCountM +=1
+            iCost += cost[item]
+            value += points[item]
+            
+            if data['Position'][item] == 'GK':
+                gkCountM+= 1
+            elif data['Position'][item] == 'DEF':
+                defeCountM+= 1
+            elif data['Position'][item] == 'MID':
+                midCountM+= 1
+            elif data['Position'][item] == 'STR':
+                striCountM+=1
+    eligiblePlayers = []
+    done = 0
+    #print("--0--")
+    if gkCountM < 1:
+        flipTwo = random.randint(0, len(gkIndices)-1)
+        individual[int(gkIndices[flipTwo])] = 1
+        done = 1
+    
+    if defeCountM < 3:
+        #print("--1--")
+        flipTwo = random.randint(0, len(defeIndices)-1)
+        individual[int(defeIndices[flipTwo])] = 1
+        done = 1
+        
+    if midCountM < 3:
+        #print("--2--")
+        flipTwo = random.randint(0, len(midIndices)-1)
+        individual[int(midIndices[flipTwo])] = 1
+        done = 1
+        
+    if striCountM < 1:
+        #print("--3--")
+        flipTwo = random.randint(0, len(striIndices)-1)
+        individual[int(striIndices[flipTwo])] = 1
+        done = 1
+        
+    if done == 0:
+        
+        if defeCountM < 5:
+            eligiblePlayers.extend(defeIndices)
+        
+        if midCountM < 5:
+            eligiblePlayers.extend(midIndices)
+           
+        if striCountM < 3:
+            eligiblePlayers.extend(striIndices)
+        
+        while done == 0 and sum(individual) <11:
+            #print("--4--")
+            flipTwo = random.randint(0, len(eligiblePlayers)-1)
+            #print(flipTwo, ", ", len(eligiblePlayers))
+            if individual[int(eligiblePlayers[flipTwo])] == 0:
+                individual[int(eligiblePlayers[flipTwo])] = 1
+                done = 1
+            
+                
+        
+        #print(eligiblePlayers, "--------")
+        #while done ==0:
+
+            #else:
+                #print("MUTATION ERROR: OUT OF RANGE")
+            #print(flipTwo)
+    #check_constraints(individual)
+    return individual,
+        
+
+            
+
+        
+    
+    
+
 # register all operators we need with the toolbox
 toolbox.register("constraints", check_constraints)
 toolbox.register("evaluate", evalFootie1)
 toolbox.register("mate", tools.cxTwoPoint)
-toolbox.register("mutate", tools.mutFlipBit, indpb=0.01)
+toolbox.register("mutate", customMutate)
 toolbox.register("select", tools.selTournament, tournsize=2)
 
 
@@ -255,7 +386,7 @@ def main():
     
     # run the algorithm: we need to tell it what parameters to use
     # cxpb = crossover probability; mutpb = mutation probability; ngen = number of iterations
-    pop, log = algorithms.eaSimple(pop, toolbox, cxpb=0.6, mutpb=0.01, ngen=NGEN, 
+    pop, log = algorithms.eaSimple(pop, toolbox, cxpb=0.6, mutpb=0.05, ngen=NGEN, 
                                    stats=stats, halloffame=hof, verbose=True)
     print (population)
     return pop, log, hof
@@ -265,13 +396,13 @@ def main():
 # run the main function 
 
 # create an dataframe that has 3 columns to record the important data from each run
-column_names = ['popsize', 'fitness', 'genMaxFound']
+column_names = ['popsize', 'fitness', 'genMaxFound'] 
 df = pd.DataFrame(columns = column_names)
 
 
-for  POPSIZE in range(500, 1010, 500):
+for  POPSIZE in range(500, 1510, 500):
         # repeat EA 10x for each parameter
-        for reps in range(10):
+        for reps in range(3):
             print("Population: ", POPSIZE, ", Reps: ", reps)
             pop,log,hof = main()
             

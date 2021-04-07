@@ -1,7 +1,7 @@
 # KNAPSACK CODE
 
 
-#import some standard python packages that will be useful
+# import some standard python packages that will be useful
 import array
 import random
 import numpy as np
@@ -29,17 +29,17 @@ print("num possible players is %s" % (num_players))
 
 # HELPFUL DATA 
 # these can be used for calculating points and costs and are also used in the constraint_checking function
-points = data['Points'] 
+points = data['Points']
 cost = data['Cost']
 budget = 100
-    
+
 # create lists with all elements initialised to 0
 gk = np.zeros(num_players)
 mid = np.zeros(num_players)
 defe = np.zeros(num_players)
 stri = np.zeros(num_players)
 
-#Creating an array per type of player
+# Creating an array per type of player
 for i in range(num_players):
     if data['Position'][i] == 'GK':
         gk[i] = 1
@@ -48,15 +48,16 @@ for i in range(num_players):
     elif data['Position'][i] == 'MID':
         mid[i] = 1
     elif data['Position'][i] == 'STR':
-        stri[i]=1
-        
+        stri[i] = 1
+
 goalKeeperCount = sum(gk)
 defenderCount = sum(defe)
 midfielderCount = sum(mid)
 strikerCount = sum(stri)
 popCheck = goalKeeperCount + defenderCount + midfielderCount + strikerCount
-print("GoalKeepers: ", goalKeeperCount, " Defenders: ", defenderCount, " Midfielders: ", midfielderCount, " Strikers: ", strikerCount, " ~ ", popCheck)  
-      
+print("GoalKeepers: ", goalKeeperCount, " Defenders: ", defenderCount, " Midfielders: ", midfielderCount, " Strikers: ",
+      strikerCount, " ~ ", popCheck)
+
 gkIndices = np.zeros(int(goalKeeperCount))
 defeIndices = np.zeros(int(defenderCount))
 midIndices = np.zeros(int(midfielderCount))
@@ -78,90 +79,85 @@ for i in range(num_players):
         midIndices[midTempCount] = i
         midTempCount += 1
     elif data['Position'][i] == 'STR':
-        striIndices[striTempCount]=i
-        striTempCount +=1
+        striIndices[striTempCount] = i
+        striTempCount += 1
 
-
-  
 # check the constraints
 # the function MUST be passed a list of length num_players in which each bit is set to 0 or 1
 popCount = 0
 
 
-
 # this returns a single individual: this function has the probability pInit of initialsing as feasible:
 # if it is set to 0, initialisation is all random. If it is 1, initialistion is all feasible
 def myInitialisationFunction(icls, size):
-    
     # first create an individual with all bits set to 0
     ind = icls(np.zeros(num_players))
-    
-    #Set the counters for each type of player to 0
+
+    # Set the counters for each type of player to 0
     gkCount = 0
     defeCount = 0
     midCount = 0
     striCount = 0
-    
-    #total player count
+
+    # total player count
     playerCount = 0
-    
-    #probability that the bit will be set to 1
+
+    # probability that the bit will be set to 1
     initProb = 8
-    
-    #Initial pass over the individual for it to meet the minimum requirements for each type of player
-    #Loops until the requirements are met
+
+    # Initial pass over the individual for it to meet the minimum requirements for each type of player
+    # Loops until the requirements are met
     while gkCount == 0 or defeCount < 3 or midCount < 3 or striCount < 1:
         for i in range(num_players):
             playerCount = gkCount + defeCount + midCount + striCount
             if playerCount < 8:
-                #this is used to determine wether the player will be considered for the team. The probability of 
-                #consideration is 8/523 to get an even spread across the individual
+                # this is used to determine wether the player will be considered for the team. The probability of
+                # consideration is 8/523 to get an even spread across the individual
                 j = random.randint(0, 523)
                 if j < initProb:
-                    #checks wether more can be added. If so, then add them to the team
+                    # checks wether more can be added. If so, then add them to the team
                     if (data['Position'][i] == 'GK' and gkCount == 0):
-                        gkCount+=1
+                        gkCount += 1
                         ind[i] = 1
                     elif (data['Position'][i] == 'DEF' and defeCount < 3):
-                        defeCount+=1
+                        defeCount += 1
                         ind[i] = 1
                     elif (data['Position'][i] == 'MID' and midCount < 3):
-                        midCount+=1
+                        midCount += 1
                         ind[i] = 1
                     elif (data['Position'][i] == 'STR' and striCount < 1):
-                        striCount+=1
+                        striCount += 1
                         ind[i] = 1
-            
-    #print(sum(ind), gkCount + defeCount + midCount + striCount, gkCount, defeCount, midCount, striCount)
-    
-    #The same loop as the previous one, only here it is to randomly fill the rest of the team to meet the requirements
-    while playerCount<11:
+
+    # print(sum(ind), gkCount + defeCount + midCount + striCount, gkCount, defeCount, midCount, striCount)
+
+    # The same loop as the previous one, only here it is to randomly fill the rest of the team to meet the requirements
+    while playerCount < 11:
         for i in range(num_players):
-            
+
             if playerCount < 11:
                 j = random.randint(0, 523)
                 if j < initProb:
-                    
+
                     if (data['Position'][i] == 'GK' and gkCount == 0):
-                        gkCount+=1
+                        gkCount += 1
                         ind[i] = 1
                     elif (data['Position'][i] == 'DEF' and defeCount < 5):
-                        defeCount+=1
+                        defeCount += 1
                         ind[i] = 1
                     elif (data['Position'][i] == 'MID' and midCount < 5):
-                        midCount+=1
+                        midCount += 1
                         ind[i] = 1
                     elif (data['Position'][i] == 'STR' and striCount < 3):
-                        striCount+=1
+                        striCount += 1
                         ind[i] = 1
             playerCount = gkCount + defeCount + midCount + striCount
-            
-            
-                
-    #print(playerCount, gkCount, defeCount, midCount, striCount)
-    #7print("--------------")
-     
+
+    # print(playerCount, gkCount, defeCount, midCount, striCount)
+    # 7print("--------------")
+
     return ind
+
 
 # define the fitness class and creare an individual class
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
@@ -176,8 +172,8 @@ toolbox.register("individual", myInitialisationFunction, creator.Individual, num
 #  a population consist of a list of individuals
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
+
 def evalFootie1(individual):
-    
     iCost = 0.0
     value = 0.0
     playerCountE = 0
@@ -185,178 +181,169 @@ def evalFootie1(individual):
     defeCountE = 0
     midCountE = 0
     striCountE = 0
-    
+
     for item in range(num_players):
-        if (individual[item]==1):
-            playerCountE +=1
+        if (individual[item] == 1):
+            playerCountE += 1
             iCost += cost[item]
             value += points[item]
-            
+
             if data['Position'][item] == 'GK':
-                gkCountE+= 1
+                gkCountE += 1
             elif data['Position'][item] == 'DEF':
-                defeCountE+= 1
+                defeCountE += 1
             elif data['Position'][item] == 'MID':
-                midCountE+= 1
+                midCountE += 1
             elif data['Position'][item] == 'STR':
-                striCountE+=1
-                
-    #Below are the constraints. If the team breahes any of the constraints then their evaluation score is set to 0
-    if  (iCost > budget or playerCountE != 11 or gkCountE > 1 or defeCountE > 5 or midCountE > 5 or striCountE > 3):
-        return 0,          
-    return  value,
+                striCountE += 1
+
+    # Below are the constraints. If the team breahes any of the constraints then their evaluation score is set to 0
+    if (iCost > budget or playerCountE != 11 or gkCountE > 1 or defeCountE > 5 or midCountE > 5 or striCountE > 3):
+        return 0,
+    return value,
+
 
 def check_constraints(individual):
-     
     broken_constraints = 0
 
     # exactly 11 players
     c1 = np.sum(individual)
-    if  c1 != 11:
-        broken_constraints+=1
-        print("total players is %s " %(c1))
-        
-    
-    #need cost <= 100"
-    c2 = np.sum(np.multiply(cost, individual)) 
+    if c1 != 11:
+        broken_constraints += 1
+        print("total players is %s " % (c1))
+
+    # need cost <= 100"
+    c2 = np.sum(np.multiply(cost, individual))
     if c2 > 100:
-        broken_constraints+=1
-        print("cost is %s " %(c2))
-    
+        broken_constraints += 1
+        print("cost is %s " % (c2))
+
     # need only 1 GK
     c3 = np.sum(np.multiply(gk, individual))
-    if  c3 != 1:
-        broken_constraints+=1
-        print("goalies is %s " %(c3))
-    
+    if c3 != 1:
+        broken_constraints += 1
+        print("goalies is %s " % (c3))
+
     # need less than 3-5 DEF"
-    c4 = np.sum(np.multiply(defe,individual))
-    if  c4 > 5 or c4 < 3:
-        broken_constraints+=1
-        print("DEFE is %s " %(c4))
-            
-    #need 3- 5 MID
-    c5 = np.sum(np.multiply(mid,individual))
-    if  c5 > 5 or c5 < 3: 
-        broken_constraints+=1
-        print("MID is %s " %(c5))
-        
+    c4 = np.sum(np.multiply(defe, individual))
+    if c4 > 5 or c4 < 3:
+        broken_constraints += 1
+        print("DEFE is %s " % (c4))
+
+    # need 3- 5 MID
+    c5 = np.sum(np.multiply(mid, individual))
+    if c5 > 5 or c5 < 3:
+        broken_constraints += 1
+        print("MID is %s " % (c5))
+
     # need 1 -1 3 STR"
-    c6 = np.sum(np.multiply(stri,individual))
-    if c6 > 3 or c6 < 1: 
-        broken_constraints+=1
-        print("STR is %s " %(c6))
-        
+    c6 = np.sum(np.multiply(stri, individual))
+    if c6 > 3 or c6 < 1:
+        broken_constraints += 1
+        print("STR is %s " % (c6))
+
     # get indices of players selected
-    selectedPlayers = [idx for idx, element in enumerate(individual) if element==1]
-    
+    selectedPlayers = [idx for idx, element in enumerate(individual) if element == 1]
+
     totalpoints = np.sum(np.multiply(points, individual))
-        
-        
-    print("total broken constraints: %s" %(broken_constraints))
-    print("total points: %s" %(totalpoints))
-    print("total cost is %s" %(c2))
-    print("selected players are %s" %(selectedPlayers))
-    
+
+    print("total broken constraints: %s" % (broken_constraints))
+    print("total points: %s" % (totalpoints))
+    print("total cost is %s" % (c2))
+    print("selected players are %s" % (selectedPlayers))
+
     return broken_constraints, totalpoints
+
 
 def customMutate(individual):
     playerNum = 0
-    flipOne = random.randint(1,11)
-    #print(flipOne, "--")
-    #check_constraints(individual)
+    flipOne = random.randint(1, 11)
+    # print(flipOne, "--")
+    # check_constraints(individual)
     for i in range(523):
         if individual[i] == 1:
-            playerNum +=1
-            
+            playerNum += 1
+
         if playerNum == flipOne:
-            individual[i] = 0 
-    #check_constraints(individual)
-            
+            individual[i] = 0
+            # check_constraints(individual)
+
     iCost = 0.0
     value = 0.0
     playerCountM = 0
     gkCountM = 0
-    defeCountM= 0
-    midCountM= 0
+    defeCountM = 0
+    midCountM = 0
     striCountM = 0
-    
+
     for item in range(num_players):
-        if (individual[item]==1):
-            playerCountM +=1
+        if (individual[item] == 1):
+            playerCountM += 1
             iCost += cost[item]
             value += points[item]
-            
+
             if data['Position'][item] == 'GK':
-                gkCountM+= 1
+                gkCountM += 1
             elif data['Position'][item] == 'DEF':
-                defeCountM+= 1
+                defeCountM += 1
             elif data['Position'][item] == 'MID':
-                midCountM+= 1
+                midCountM += 1
             elif data['Position'][item] == 'STR':
-                striCountM+=1
+                striCountM += 1
     eligiblePlayers = []
     done = 0
-    #print("--0--")
+    # print("--0--")
     if gkCountM < 1:
-        flipTwo = random.randint(0, len(gkIndices)-1)
+        flipTwo = random.randint(0, len(gkIndices) - 1)
         individual[int(gkIndices[flipTwo])] = 1
         done = 1
-    
+
     if defeCountM < 3:
-        #print("--1--")
-        flipTwo = random.randint(0, len(defeIndices)-1)
+        # print("--1--")
+        flipTwo = random.randint(0, len(defeIndices) - 1)
         individual[int(defeIndices[flipTwo])] = 1
         done = 1
-        
+
     if midCountM < 3:
-        #print("--2--")
-        flipTwo = random.randint(0, len(midIndices)-1)
+        # print("--2--")
+        flipTwo = random.randint(0, len(midIndices) - 1)
         individual[int(midIndices[flipTwo])] = 1
         done = 1
-        
+
     if striCountM < 1:
-        #print("--3--")
-        flipTwo = random.randint(0, len(striIndices)-1)
+        # print("--3--")
+        flipTwo = random.randint(0, len(striIndices) - 1)
         individual[int(striIndices[flipTwo])] = 1
         done = 1
-        
+
     if done == 0:
-        
+
         if defeCountM < 5:
             eligiblePlayers.extend(defeIndices)
-        
+
         if midCountM < 5:
             eligiblePlayers.extend(midIndices)
-           
+
         if striCountM < 3:
             eligiblePlayers.extend(striIndices)
-        
-        while done == 0 and sum(individual) <11:
-            #print("--4--")
-            flipTwo = random.randint(0, len(eligiblePlayers)-1)
-            #print(flipTwo, ", ", len(eligiblePlayers))
+
+        while done == 0 and sum(individual) < 11:
+            # print("--4--")
+            flipTwo = random.randint(0, len(eligiblePlayers) - 1)
+            # print(flipTwo, ", ", len(eligiblePlayers))
             if individual[int(eligiblePlayers[flipTwo])] == 0:
                 individual[int(eligiblePlayers[flipTwo])] = 1
                 done = 1
-            
-                
-        
-        #print(eligiblePlayers, "--------")
-        #while done ==0:
 
-            #else:
-                #print("MUTATION ERROR: OUT OF RANGE")
-            #print(flipTwo)
-    #check_constraints(individual)
+        # print(eligiblePlayers, "--------")
+        # while done ==0:
+
+        # else:
+        # print("MUTATION ERROR: OUT OF RANGE")
+        # print(flipTwo)
+    # check_constraints(individual)
     return individual,
-        
 
-            
-
-        
-    
-    
 
 # register all operators we need with the toolbox
 toolbox.register("constraints", check_constraints)
@@ -367,15 +354,14 @@ toolbox.register("select", tools.selTournament, tournsize=2)
 
 
 def main():
-    
     # choose a population size: e.g. 200
-    
+
     population = POPSIZE
     pop = toolbox.population(n=population)
-    
+
     # keep track of the single best solution found
     hof = tools.HallOfFame(1)
- 
+
     # create a statistics object: we can log what ever statistics we want using this. We use the numpy Python library
     # to calculate the stats and label them with convenient labels
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -383,12 +369,12 @@ def main():
     stats.register("std", np.std)
     stats.register("min", np.min)
     stats.register("max", np.max)
-    
+
     # run the algorithm: we need to tell it what parameters to use
     # cxpb = crossover probability; mutpb = mutation probability; ngen = number of iterations
-    pop, log = algorithms.eaSimple(pop, toolbox, cxpb=0.6, mutpb=0.05, ngen=NGEN, 
+    pop, log = algorithms.eaSimple(pop, toolbox, cxpb=0.6, mutpb=0.05, ngen=NGEN,
                                    stats=stats, halloffame=hof, verbose=True)
-    print (population)
+    print(population)
     return pop, log, hof
 
 
@@ -396,25 +382,24 @@ def main():
 # run the main function 
 
 # create an dataframe that has 3 columns to record the important data from each run
-column_names = ['popsize', 'fitness', 'genMaxFound'] 
-df = pd.DataFrame(columns = column_names)
+column_names = ['popsize', 'fitness', 'genMaxFound']
+df = pd.DataFrame(columns=column_names)
 
+for POPSIZE in range(1500, 1510, 500):
+    # repeat EA 10x for each parameter
+    for reps in range(1):
+        print("Population: ", POPSIZE, ", Reps: ", reps)
+        pop, log, hof = main()
 
-for  POPSIZE in range(500, 1510, 500):
-        # repeat EA 10x for each parameter
-        for reps in range(3):
-            print("Population: ", POPSIZE, ", Reps: ", reps)
-            pop,log,hof = main()
-            
-            # extract the best fitness
-            best = hof[0].fitness.values[0]
-            # save the generation this fitness was first found
-            max = log.select('max')
-            for gen in range(NGEN):  
-                if max[gen] == best:
-                    break   
-            
-            df = df.append({'popsize': POPSIZE , 'fitness': best, 'genMaxFound':gen}, ignore_index=True)
+        # extract the best fitness
+        best = hof[0].fitness.values[0]
+        # save the generation this fitness was first found
+        max = log.select('max')
+        for gen in range(NGEN):
+            if max[gen] == best:
+                break
+
+        df = df.append({'popsize': POPSIZE, 'fitness': best, 'genMaxFound': gen}, ignore_index=True)
 
 # code for printing statistics and plots
 print(df.groupby('popsize').mean())
@@ -427,26 +412,24 @@ boxplot = df.boxplot(column=['fitness'], by=['popsize'])
 # plot genMaxFound per population size
 boxplot = df.boxplot(column=['genMaxFound'], by=['popsize'])
 
-
 ##############################
 print("-------")
 check_constraints(hof[0])
 print("-------")
 
-best = hof[0].fitness.values[0]   # best fitness found is stored at index 0 in the hof list
-
+best = hof[0].fitness.values[0]  # best fitness found is stored at index 0 in the hof list
 
 # look in the logbook to see what generation this was found at
 
 max = log.select("max")  # max fitness per generation stored in log
 
 for i in range(NGEN):  # set to ngen
-        fit = max[i]
-        if fit == best:
-            break        
-        
+    fit = max[i]
+    if fit == best:
+        break
+
 print("max fitness found is %s at generation %s" % (best, i))
- 
+
 # code for plotting
 
 gen = log.select("gen")
@@ -457,13 +440,13 @@ fit_avg = log.select("avg")
 fig, ax1 = plt.subplots()
 line1 = ax1.plot(gen, fit_max, "b-", label="max Fitness", color="r")
 line2 = ax1.plot(gen, fit_min, "b-", label="min Fitness", color="b")
-line3 = ax1.plot(gen , fit_avg, "b-", label="avg Fitness", color="g")
+line3 = ax1.plot(gen, fit_avg, "b-", label="avg Fitness", color="g")
 ax1.set_xlabel("Generations")
 ax1.set_ylabel("Fitness", color="b")
 for tl in ax1.get_yticklabels():
     tl.set_color("b")
-ax1.set_ylim(0,2500)
-    
-lns = line1+line2+line3
+ax1.set_ylim(0, 2500)
+
+lns = line1 + line2 + line3
 labs = [l.get_label() for l in lns]
 ax1.legend(lns, labs, loc="center right")

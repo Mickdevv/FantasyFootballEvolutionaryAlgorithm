@@ -111,7 +111,7 @@ def myInitialisationFunction(icls, size):
         for i in range(num_players):
             playerCount = gkCount + defeCount + midCount + striCount
             if playerCount < 8:
-                # this is used to determine wether the player will be considered for the team. The probability of
+                # this is used to determine whether the player will be considered for the team. The probability of
                 # consideration is 8/523 to get an even spread across the individual
                 j = random.randint(0, 523)
                 if j < initProb:
@@ -159,7 +159,7 @@ def myInitialisationFunction(icls, size):
     return ind
 
 
-# define the fitness class and creare an individual class
+# define the fitness class and create an individual class
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", list, fitness=creator.FitnessMax)
 
